@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import CharacterCounter from '../components/ui/CharacterCounter';
+import FileUpload from '../components/ui/FileUpload';
+import ImageCropper from '../components/ui/ImageCropper';
 import { useAuth } from '../services/AuthContext';
 import { Sidebar } from '../components/Sidebar';
-import { User, Shield, Bell, Palette, Camera, Save, Trash2, AlertTriangle, Lock, Key, LogOut, Mail } from 'lucide-react';
+import { User, Shield, Bell, Palette, Camera, Save, Trash2, AlertTriangle, Lock, Key, LogOut, Mail, X, Check } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import DeletionSurveyModal from '../components/DeletionSurveyModal';
@@ -24,6 +26,12 @@ const ProfilePage = () => {
   
   // Active tab state for settings navigation
   const [activeTab, setActiveTab] = useState('personal');
+
+  // Profile picture states
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [showImageCropper, setShowImageCropper] = useState(false);
+  const [croppedImage, setCroppedImage] = useState<string | null>(null);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   // Personal info form state
   const [displayName, setDisplayName] = useState(user?.name || 'User');
@@ -94,6 +102,63 @@ const ProfilePage = () => {
    */
   const handleProfilePictureUpload = () => {
     console.log('Uploading profile picture');
+  };
+
+  /**
+   * Handles profile picture file selection
+   */
+  const handleProfilePictureSelect = (file: File | null) => {
+    setSelectedImage(file);
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setCroppedImage(imageUrl);
+      setShowImageCropper(true);
+    }
+  };
+
+  /**
+  * Handles cropped image completion
+  */
+  const handleCropComplete = (croppedImageUrl: string) => {
+    setCroppedImage(croppedImageUrl);
+    setShowImageCropper(false);
+    // In production, upload to server here
+    console.log('Cropped image ready for upload:', croppedImageUrl);
+  };
+
+  /**
+  * Removes profile picture
+   */
+  const handleRemoveProfilePicture = () => {
+    setCroppedImage(null);
+    setSelectedImage(null);
+    setShowRemoveConfirm(false);
+    // In production, send API request to remove profile picture
+    console.log('Profile picture removed');
+    // Update user context
+    if (updateUser) {
+      updateUser({ avatar: null });
+    }
+    alert('Profile picture removed successfully!');
+  };
+
+  /**
+   * Saves profile picture
+   */
+  const handleSaveProfilePicture = () => {
+    if (!croppedImage) {
+      alert('Please select an image first');
+      return;
+    } 
+    // In production, upload croppedImage to server
+    // Example: await api.post('/profile/picture', { image: croppedImage });
+    console.log('Saving profile picture:', croppedImage); 
+    // Update user context
+    if (updateUser) {
+      updateUser({ avatar: croppedImage });
+    }
+    alert('Profile picture updated successfully!');
+    setSelectedImage(null);
   };
 
   /**
@@ -305,32 +370,92 @@ const ProfilePage = () => {
             {activeTab === 'personal' && (
               <div className="space-y-6" role="tabpanel" aria-label="Personal Information Settings">
                 {/* Profile picture section */}
-                <div className="flex items-center gap-6 mb-8">
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-8">
                   <div className="relative group">
-                    <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-600 border-4 border-white dark:border-slate-800 shadow-md overflow-hidden">
+                    <div className="w-32 h-32 rounded-full bg-slate-200 dark:bg-slate-600 border-4 border-white dark:border-slate-800 shadow-md overflow-hidden">
                       <img 
-                        src={user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=User"} 
+                        src={croppedImage || user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=User"} 
                         alt="User avatar" 
+                        className="w-full h-full object-cover"
                         aria-label="User profile picture"
                       />
                     </div>
-                    <button 
-                      onClick={handleProfilePictureUpload}
-                      className="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 rounded-full border-2 border-white dark:border-slate-800 hover:bg-blue-700 transition-colors"
-                      aria-label="Update profile picture"
-                    >
-                      <Camera size={16} aria-hidden="true" />
-                    </button>
+                    <div className="absolute bottom-0 right-0 flex gap-1">
+                      <button 
+                        onClick={() => document.getElementById('profilePictureUpload')?.click()}
+                        className="bg-blue-600 text-white p-2 rounded-full border-2 border-white dark:border-slate-800 hover:bg-blue-700 transition-colors shadow-md"
+                        aria-label="Update profile picture"
+                        title="Upload new picture"
+                      >
+                        <Camera size={16} aria-hidden="true" />
+                      </button>
+                      {croppedImage || user?.avatar ? (
+                        <button 
+                          onClick={() => setShowRemoveConfirm(true)}
+                          className="bg-red-600 text-white p-2 rounded-full border-2 border-white dark:border-slate-800 hover:bg-red-700 transition-colors shadow-md"
+                          aria-label="Remove profile picture"
+                          title="Remove picture"
+                        >
+                          <X size={16} aria-hidden="true" />
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+  
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">
                       {displayName || 'User'}
                     </h3>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">
-                      Update your photo and personal details.
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+                      Upload a new profile picture. Supported formats: JPG, PNG, WebP (Max 5MB)
                     </p>
+    
+                    {/* File Upload Component */}
+                    <div className="max-w-md">
+                      <FileUpload
+                        onFileSelect={handleProfilePictureSelect}
+                        acceptedFormats={['.jpg', '.jpeg', '.png', '.webp']}
+                        maxSizeMB={5}
+                      />
+                    </div>
+    
+                    {/* Save button for profile picture */}
+                    {croppedImage && croppedImage !== user?.avatar && (
+                      <div className="mt-4 flex gap-3">
+                        <Button
+                          onClick={handleSaveProfilePicture}
+                          className="gap-2"
+                        >
+                        <Check size={16} />
+                          Save Profile Picture
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setCroppedImage(user?.avatar || null);
+                            setSelectedImage(null);
+                          }}
+                          variant="outline"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {/* Hidden file input for direct click */}
+                <input
+                  type="file"
+                  id="profilePictureUpload"
+                  className="hidden"
+                  accept=".jpg,.jpeg,.png,.webp"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleProfilePictureSelect(file);
+                    }
+                  }}
+                />
 
                 {/* Personal information form */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -867,6 +992,60 @@ const ProfilePage = () => {
         onComplete={handleSurveyComplete}
         userEmail={user?.email || ''}
       />
+
+      {/* Image Cropper Modal */}
+      {showImageCropper && selectedImage && (
+        <ImageCropper
+          imageSrc={URL.createObjectURL(selectedImage)}
+          onCropComplete={handleCropComplete}
+          onCancel={() => {
+            setShowImageCropper(false);
+            setSelectedImage(null);
+            setCroppedImage(user?.avatar || null);
+          }}
+          circularCrop={true}
+        />
+      )}
+
+      {/* Remove Confirmation Modal */}
+      <Modal
+        isOpen={showRemoveConfirm}
+        onClose={() => setShowRemoveConfirm(false)}
+        title="Remove Profile Picture"
+      >
+        <div className="space-y-4">
+          <div className="flex justify-center mb-4">
+            <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-600 border-4 border-white dark:border-slate-800 overflow-hidden">
+              <img 
+                src={croppedImage || user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=User"} 
+                alt="Current profile" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+    
+          <p className="text-slate-600 dark:text-slate-300 text-center">
+            Are you sure you want to remove your profile picture? This will revert to the default avatar.
+          </p>
+    
+          <div className="flex gap-3 pt-4">
+            <Button
+              onClick={() => setShowRemoveConfirm(false)}
+              variant="outline"
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRemoveProfilePicture}
+              className="flex-1 bg-red-600 hover:bg-red-700"
+            >
+              Remove Picture
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
     </div>
   );
 };
