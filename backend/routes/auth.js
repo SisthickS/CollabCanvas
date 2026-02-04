@@ -99,6 +99,7 @@ router.post('/verify-email', async (req, res) => {
 });
 
 // 4. Login
+// --- 4. Login (Finalized for Persistence) ---
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -114,11 +115,26 @@ router.post('/login', async (req, res) => {
     await user.save();
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    res.json({ success: true, token, user: { id: user._id, username: user.username, email: user.email, fullName: user.displayName } });
+
+    // CRITICAL FIX: Include bio and avatar in the response object
+    res.json({ 
+      success: true, 
+      token, 
+      user: { 
+        id: user._id, 
+        username: user.username, 
+        email: user.email, 
+        fullName: user.displayName,
+        avatar: user.avatar, // Added for persistence
+        bio: user.bio        // Added for persistence
+      } 
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Login failed' });
   }
 });
+
+
 
 // 5. FORGOT PASSWORD
 router.post('/forgot-password', async (req, res) => {

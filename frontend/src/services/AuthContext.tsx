@@ -12,15 +12,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('auth_token'));
-  const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('user') || 'null'));
+  
+  const [user, setUser] = useState<any>(() => {
+    const savedUser = localStorage.getItem('user');
+    try {
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const login = (newToken: string, userData: any) => {
     setToken(newToken);
-    setUser(userData);
+    setUser(userData);    
     localStorage.setItem('auth_token', newToken);
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('user', JSON.stringify(userData)); 
   };
 
+  // ... (rest of your logout and updateUser functions remain the same)
   const logout = () => {
     setToken(null);
     setUser(null);
