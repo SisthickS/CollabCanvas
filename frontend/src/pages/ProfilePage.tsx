@@ -999,7 +999,6 @@ const ProfilePage = () => {
         isOpen={showRemoveConfirm}
         onClose={() => setShowRemoveConfirm(false)}
         title="Remove Profile Picture"
-        size="md"
       >
         <div className="space-y-4">
           <div className="flex justify-center mb-4">
