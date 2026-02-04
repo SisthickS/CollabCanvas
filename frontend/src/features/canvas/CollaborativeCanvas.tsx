@@ -1,9 +1,9 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
+import ColorPicker from '../../components/ui/ColorPicker';
 import type { DrawingElement, Point, BrushConfig } from '../../types/canvas';
 import { 
   Square, Circle, Edit2, Trash2, Grid, Minus, Plus, 
-  Type, Image, Eraser, MinusCircle, PlusCircle, Droplet,
-  Zap, ZapOff
+  Eraser, MinusCircle, PlusCircle, Zap, ZapOff 
 } from 'lucide-react';
 
 /**
@@ -560,57 +560,33 @@ export const CollaborativeCanvas = () => {
           </button>
         </div>
         
-        {/* Color and opacity controls */}
-        <div className="flex items-center gap-2 border-r border-slate-200 pr-4">
-          <div className="flex flex-col items-center">
-            <input 
-              type="color" 
-              value={color} 
-              onChange={(e) => setColor(e.target.value)} 
-              className="w-8 h-8 rounded cursor-pointer border border-slate-300" 
-              aria-label="Drawing color"
-              title="Drawing Color"
+        {/* Color picker with opacity */}
+        <ColorPicker
+          value={color}
+          onChange={setColor}
+          opacity={opacity}
+          onOpacityChange={setOpacity}
+          className="border-r border-slate-200 pr-4"
+        />
+
+        {/* Stroke width control (keep this) */}
+        <div className="flex flex-col items-center border-r border-slate-200 pr-4">
+          <div className="flex items-center gap-1">
+            <MinusCircle 
+              size={16} 
+              className="text-slate-400 cursor-pointer hover:text-slate-600"
+              onClick={() => setStrokeWidth(prev => Math.max(1, prev - 1))}
             />
-            <span className="text-xs text-slate-500 mt-1">Color</span>
+            <span className="text-sm font-medium text-slate-700 w-6 text-center">
+              {strokeWidth}
+            </span>
+            <PlusCircle 
+              size={16} 
+              className="text-slate-400 cursor-pointer hover:text-slate-600"
+              onClick={() => setStrokeWidth(prev => Math.min(20, prev + 1))}
+            />
           </div>
-          
-          <div className="flex flex-col items-center">
-            <div className="flex items-center gap-1">
-              <MinusCircle 
-                size={16} 
-                className="text-slate-400 cursor-pointer hover:text-slate-600"
-                onClick={() => setStrokeWidth(prev => Math.max(1, prev - 1))}
-              />
-              <span className="text-sm font-medium text-slate-700 w-6 text-center">
-                {strokeWidth}
-              </span>
-              <PlusCircle 
-                size={16} 
-                className="text-slate-400 cursor-pointer hover:text-slate-600"
-                onClick={() => setStrokeWidth(prev => Math.min(20, prev + 1))}
-              />
-            </div>
-            <span className="text-xs text-slate-500">Size</span>
-          </div>
-          
-          <div className="flex flex-col items-center">
-            <div className="flex items-center gap-1">
-              <MinusCircle 
-                size={16} 
-                className="text-slate-400 cursor-pointer hover:text-slate-600"
-                onClick={() => setOpacity(prev => Math.max(0.1, prev - 0.1))}
-              />
-              <span className="text-sm font-medium text-slate-700 w-8 text-center">
-                {opacity.toFixed(1)}
-              </span>
-              <PlusCircle 
-                size={16} 
-                className="text-slate-400 cursor-pointer hover:text-slate-600"
-                onClick={() => setOpacity(prev => Math.min(1, prev + 0.1))}
-              />
-            </div>
-            <span className="text-xs text-slate-500">Opacity</span>
-          </div>
+          <span className="text-xs text-slate-500">Size</span>
         </div>
         
         {/* Brush settings */}
