@@ -66,7 +66,7 @@ export const Sidebar = () => {
           <div className="bg-blue-600 p-2 rounded-lg text-white">
             <PlusCircle size={24} aria-hidden="true" />
           </div>
-          <span className="font-bold text-xl tracking-tight text-slate-800 dark:text-white">CanvasCollab</span>
+          <span className="font-bold text-xl tracking-tight text-slate-800 dark:text-white">CollabCanvas</span>
         </div>
 
         {/* User profile section */}
@@ -129,7 +129,7 @@ export const Sidebar = () => {
         {/* Version info */}
         <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700">
           <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
-            v1.0.0 • CanvasCollab
+            v1.0.0 • CollabCanvas
           </p>
         </div>
       </aside>
