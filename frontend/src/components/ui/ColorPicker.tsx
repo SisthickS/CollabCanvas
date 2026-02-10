@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Palette, Droplet, Check } from 'lucide-react';
 
 /**
@@ -83,11 +83,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
 }) => {
   // State for dropdown visibility
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  
-  // State for HSL color values
-  const [hue, setHue] = useState<number>(0);
-  const [saturation, setSaturation] = useState<number>(100);
-  const [lightness, setLightness] = useState<number>(50);
+
   
   // State for alpha (opacity) value
   const [alpha, setAlpha] = useState<number>(opacity);
@@ -199,12 +195,10 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
    * Initialize HSL values from current color value
    * Runs when component mounts or color value changes
    */
-  useEffect(() => {
-    const hsl = hexToHsl(value);
-    setHue(prev => (prev === hsl.h ? prev : hsl.h));
-    setSaturation(prev => (prev === hsl.s ? prev : hsl.s));
-    setLightness(prev => (prev === hsl.l ? prev : hsl.l));
+  const { h: hue, s: saturation, l: lightness } = useMemo(() => {
+    return hexToHsl(value);
   }, [value]);
+
 
   /**
    * Handle color change from HSL values
@@ -362,10 +356,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
                   type="button"
                   onClick={() => {
                     onChange(preset);
-                    const hsl = hexToHsl(preset);
-                    setHue(hsl.h);
-                    setSaturation(hsl.s);
-                    setLightness(hsl.l);
                   }}
                   className="relative w-8 h-8 rounded-lg border border-slate-300 dark:border-slate-600 hover:scale-110 transition-transform"
                   style={{ backgroundColor: preset }}
@@ -397,7 +387,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
               value={hue}
               onChange={(e) => {
                 const newHue = parseInt(e.target.value);
-                setHue(newHue);
                 handleHslChange(newHue, saturation, lightness);
               }}
               className="w-full h-2 rounded-full appearance-none cursor-pointer"
@@ -455,8 +444,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
                   const y = e.clientY - rect.top;
                   const newSaturation = Math.max(0, Math.min(100, (x / rect.width) * 100));
                   const newLightness = Math.max(0, Math.min(100, 100 - (y / rect.height) * 100));
-                  setSaturation(newSaturation);
-                  setLightness(newLightness);
                   handleHslChange(hue, newSaturation, newLightness);
                 }}
               />
@@ -527,10 +514,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
                   // Validate hex format before updating
                   if (/^#[0-9A-F]{6}$/i.test(newColor)) {
                     onChange(newColor);
-                    const hsl = hexToHsl(newColor);
-                    setHue(hsl.h);
-                    setSaturation(hsl.s);
-                    setLightness(hsl.l);
                   }
                 }}
                 className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
