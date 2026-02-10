@@ -5,6 +5,7 @@ import ColorPicker from "../../components/ui/ColorPicker";
 import type { DrawingElement, Point, BrushConfig } from "../../types/canvas";
 import BrushSettings from "../../components/ui/BrushSettings";
 import type { BrushType, StrokeStyle } from "../../types/canvas";
+import { exportDrawing } from "../../utils/authService";
 import {
   Square,
   Circle,
@@ -18,6 +19,7 @@ import {
   PlusCircle,
   Zap,
   ZapOff,
+  Download,
 } from "lucide-react";
 
 /**
@@ -171,6 +173,7 @@ export const CollaborativeCanvas = ({ roomId }: { roomId?: string }) => {
   const [remoteCursors, setRemoteCursors] = useState<
     Record<string, { x: number; y: number; username: string }>
   >({});
+  const [isExporting, setIsExporting] = useState(false);
 
   // Brush engine instance
   const brushEngineRef = useRef<BrushEngine | null>(null);
@@ -398,8 +401,8 @@ export const CollaborativeCanvas = ({ roomId }: { roomId?: string }) => {
 
         // Get element bounds for lock badge placement
         let bx = 0,
-          by = 0,
-          bw = 20,
+          by = 0;
+        const bw = 20,
           bh = 20;
         if (el.type === "pencil" || el.type === "eraser") {
           if (el.points && el.points.length > 0) {
@@ -765,6 +768,36 @@ export const CollaborativeCanvas = ({ roomId }: { roomId?: string }) => {
     setBrushConfig((prev) => ({ ...prev, ...updates }));
   };
 
+  /**
+   * Handle export drawing
+   */
+  const handleExport = async (format: 'png' | 'jpeg' = 'png') => {
+    if (!roomId) {
+      alert('Room ID is required for export');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const blob = await exportDrawing(roomId, format);
+
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `drawing_${Date.now()}.${format === 'jpeg' ? 'jpg' : 'png'}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export drawing');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div
       ref={containerRef}
@@ -933,6 +966,27 @@ export const CollaborativeCanvas = ({ roomId }: { roomId?: string }) => {
         >
           <Trash2 size={20} />
         </button>
+
+        {/* Export button with dropdown */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => handleExport('png')}
+            disabled={isExporting}
+            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Export as PNG"
+            title="Export as PNG"
+          >
+            <Download size={20} />
+          </button>
+          <button
+            onClick={() => handleExport('jpeg')}
+            disabled={isExporting}
+            className="px-2 py-1 text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Export as JPEG"
+          >
+            {isExporting ? 'Exporting...' : 'JPEG'}
+          </button>
+        </div>
       </div>
 
       {/* Canvas info overlay */}
