@@ -1,13 +1,32 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
+  // Use environment variables for flexibility (Brevo, Outlook, Gmail)
+  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const smtpPort = process.env.SMTP_PORT || 587;
+  const smtpUser = process.env.EMAIL_USER;
+  const smtpPass = process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : ''; // Strip spaces
+
+  console.log(`Attempting to send email via SMTP (${smtpHost}:${smtpPort}) from: ${smtpUser} to: ${options.email}`);
+  
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // use SSL
+    host: smtpHost,
+    port: smtpPort,
+    secure: false, // true for 465, false for other ports
+    connectionTimeout: 10000, // 10 seconds
+    socketTimeout: 10000, // 10 seconds
+    tls: {
+      ciphers: 'SSLv3',
+    },
+    // Force IPv4 to avoid IPv6 timeouts on some cloud providers
+    logger: true,
+    debug: true,
+    socket: {
+      family: 4
+    },
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: smtpUser,
+      pass: smtpPass,
     },
   });
 
@@ -15,7 +34,7 @@ const sendEmail = async (options) => {
   const targetUrl = options.verificationUrl || options.resetUrl;
 
   const mailOptions = {
-    from: `"Collaborative Canvas" <${process.env.EMAIL_USER}>`,
+    from: `"Collaborative Canvas" <${smtpUser}>`,
     to: options.email,
     subject: options.subject,
     html: `
@@ -28,7 +47,13 @@ const sendEmail = async (options) => {
     `,
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Message sent: %s", info.messageId);
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw error; // Re-throw so the controller knows it failed
+  }
 };
 
 module.exports = sendEmail;

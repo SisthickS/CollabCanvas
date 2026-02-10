@@ -87,7 +87,7 @@ router.post("/register", async (req, res) => {
 
     await newUser.save();
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
     const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
 
     try {
@@ -98,6 +98,12 @@ router.post("/register", async (req, res) => {
       });
     } catch (mailErr) {
       console.log("⚠️ Mail Delivery Failed:", mailErr.message);
+      // Rollback: Delete user so they can try again
+      await User.findByIdAndDelete(newUser._id);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Failed to send verification email. Please try again." 
+      });
     }
 
     res
@@ -218,7 +224,7 @@ router.post("/forgot-password", async (req, res) => {
     user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
     const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
     try {
