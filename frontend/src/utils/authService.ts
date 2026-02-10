@@ -55,14 +55,28 @@ export const getDeviceType = (): string => {
 
 // Password reset - request
 export const forgotPassword = async (email: string) => {
-  const response = await api.post('/auth/forgot-password', { email });
-  return response.data;
+  try {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to send reset email. Please try again.',
+    };
+  }
 };
 
 // Password reset - confirm
 export const resetPassword = async (token: string, password: string) => {
-  const response = await api.post('/auth/reset-password', { token, password });
-  return response.data;
+  try {
+    const response = await api.post('/auth/reset-password', { token, password });
+    return response.data;
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to reset password. Please try again.',
+    };
+  }
 };
 
 // Search users
