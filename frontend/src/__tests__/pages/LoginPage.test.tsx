@@ -1,0 +1,282 @@
+import React from "react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import "@testing-library/jest-dom";
+import LoginPage from "../../pages/LoginPage";
+
+/* -------------------- MOCKS -------------------- */
+
+// mock navigate
+const mockNavigate = jest.fn();
+
+// mock AuthContext
+const mockLogin = jest.fn();
+
+// mock authService
+const mockLoginWithEmailPassword = jest.fn();
+const mockGetDeviceType = jest.fn();
+
+// react-router mocks
+jest.mock("react-router-dom", () => {
+  const actual = jest.requireActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    useLocation: () => ({
+      state: null,
+    }),
+  };
+});
+
+// AuthContext mock
+jest.mock("../../services/AuthContext", () => ({
+  useAuth: () => ({
+    login: mockLogin,
+  }),
+}));
+
+// authService mock
+jest.mock("../../utils/authService", () => ({
+  loginWithEmailPassword: (creds: any, activity: any) =>
+    mockLoginWithEmailPassword(creds, activity),
+  getDeviceType: () => mockGetDeviceType(),
+}));
+
+describe("LoginPage", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    localStorage.clear();
+  });
+
+  test("renders login UI", () => {
+    render(<LoginPage />);
+
+    expect(screen.getByText(/Welcome Back/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Email Address/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sign In/i })).toBeInTheDocument();
+
+    expect(screen.getByText(/Recent Login Activity/i)).toBeInTheDocument();
+  });
+
+  test("shows no activity message if none exist in localStorage", () => {
+    render(<LoginPage />);
+    expect(screen.getByText(/No recent activity found/i)).toBeInTheDocument();
+  });
+
+  test("loads recent activities from localStorage (max 3)", () => {
+    localStorage.setItem(
+      "login_activities",
+      JSON.stringify([
+        { timestamp: "2025-01-01T10:00:00Z", ipAddress: "1.1.1.1", deviceType: "Chrome" },
+        { timestamp: "2025-01-01T11:00:00Z", ipAddress: "2.2.2.2", deviceType: "Firefox" },
+        { timestamp: "2025-01-01T12:00:00Z", ipAddress: "3.3.3.3", deviceType: "Edge" },
+        { timestamp: "2025-01-01T13:00:00Z", ipAddress: "4.4.4.4", deviceType: "Safari" },
+      ])
+    );
+
+    render(<LoginPage />);
+
+    // only first 3 should show
+    expect(screen.getByText(/1\.1\.1\.1/i)).toBeInTheDocument();
+    expect(screen.getByText(/2\.2\.2\.2/i)).toBeInTheDocument();
+    expect(screen.getByText(/3\.3\.3\.3/i)).toBeInTheDocument();
+
+    expect(screen.queryByText(/4\.4\.4\.4/i)).not.toBeInTheDocument();
+  });
+
+  test("loads remembered email from localStorage and checks rememberMe", () => {
+    localStorage.setItem("remembered_email", "saved@example.com");
+
+    render(<LoginPage />);
+
+    expect(screen.getByLabelText(/Email Address/i)).toHaveValue("saved@example.com");
+    expect(screen.getByRole("checkbox", { name: /Remember me/i })).toBeChecked();
+  });
+
+  test("shows validation error if email or password missing", async () => {
+    const user = userEvent.setup();
+    render(<LoginPage />);
+
+    await user.click(screen.getByRole("button", { name: /Sign In/i }));
+
+    expect(
+      await screen.findByText(/Please enter both email and password/i)
+    ).toBeInTheDocument();
+
+    expect(mockLoginWithEmailPassword).not.toHaveBeenCalled();
+  });
+
+  test("toggles password visibility when eye button clicked", async () => {
+    const user = userEvent.setup();
+    render(<LoginPage />);
+
+    const passwordInput = screen.getByLabelText(/Password/i);
+    const toggleBtn = screen.getByRole("button", { name: /Show password/i });
+
+    expect(passwordInput).toHaveAttribute("type", "password");
+
+    await user.click(toggleBtn);
+
+    expect(passwordInput).toHaveAttribute("type", "text");
+
+    // button label flips
+    expect(screen.getByRole("button", { name: /Hide password/i })).toBeInTheDocument();
+  });
+
+  test("calls loginWithEmailPassword with correct args", async () => {
+    const user = userEvent.setup();
+
+    mockGetDeviceType.mockReturnValue("Windows");
+    mockLoginWithEmailPassword.mockResolvedValue({
+      success: true,
+      token: "abc123",
+      user: { id: 1, name: "Sid" },
+    });
+
+    render(<LoginPage />);
+
+    await user.type(screen.getByLabelText(/Email Address/i), "user@example.com");
+    await user.type(screen.getByLabelText(/Password/i), "pass123");
+
+    await user.click(screen.getByRole("button", { name: /Sign In/i }));
+
+    await waitFor(() => {
+      expect(mockLoginWithEmailPassword).toHaveBeenCalledWith(
+        { email: "user@example.com", password: "pass123" },
+        { deviceType: "Windows", ipAddress: "Auto-detected by server" }
+      );
+    });
+  });
+
+  test("on success: calls AuthContext login() and navigates to /dashboard by default", async () => {
+    const user = userEvent.setup();
+
+    mockGetDeviceType.mockReturnValue("Windows");
+    mockLoginWithEmailPassword.mockResolvedValue({
+      success: true,
+      token: "token123",
+      user: { id: 99, email: "user@example.com" },
+    });
+
+    render(<LoginPage />);
+
+    await user.type(screen.getByLabelText(/Email Address/i), "user@example.com");
+    await user.type(screen.getByLabelText(/Password/i), "pass123");
+    await user.click(screen.getByRole("button", { name: /Sign In/i }));
+
+    await waitFor(() => {
+      expect(mockLogin).toHaveBeenCalledWith("token123", {
+        id: 99,
+        email: "user@example.com",
+      });
+    });
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
+    });
+  });
+
+  test("on success: if rememberMe checked, stores remembered_email", async () => {
+    const user = userEvent.setup();
+
+    mockGetDeviceType.mockReturnValue("Windows");
+    mockLoginWithEmailPassword.mockResolvedValue({
+      success: true,
+      token: "token123",
+      user: { id: 1 },
+    });
+
+    render(<LoginPage />);
+
+    await user.type(screen.getByLabelText(/Email Address/i), "remember@example.com");
+    await user.type(screen.getByLabelText(/Password/i), "pass123");
+
+    await user.click(screen.getByRole("checkbox", { name: /Remember me/i }));
+    await user.click(screen.getByRole("button", { name: /Sign In/i }));
+
+    await waitFor(() => {
+      expect(localStorage.getItem("remembered_email")).toBe("remember@example.com");
+    });
+  });
+
+  test("on success: if rememberMe NOT checked, removes remembered_email", async () => {
+    const user = userEvent.setup();
+
+    localStorage.setItem("remembered_email", "old@example.com");
+
+    mockGetDeviceType.mockReturnValue("Windows");
+    mockLoginWithEmailPassword.mockResolvedValue({
+      success: true,
+      token: "token123",
+      user: { id: 1 },
+    });
+
+    render(<LoginPage />);
+
+    await user.type(screen.getByLabelText(/Email Address/i), "new@example.com");
+    await user.type(screen.getByLabelText(/Password/i), "pass123");
+
+    // don't click remember me
+    await user.click(screen.getByRole("button", { name: /Sign In/i }));
+
+    await waitFor(() => {
+      expect(localStorage.getItem("remembered_email")).toBe(null);
+    });
+  });
+
+  test("shows API error message when result.success=false", async () => {
+    const user = userEvent.setup();
+
+    mockGetDeviceType.mockReturnValue("Windows");
+    mockLoginWithEmailPassword.mockResolvedValue({
+      success: false,
+      message: "Invalid credentials",
+    });
+
+    render(<LoginPage />);
+
+    await user.type(screen.getByLabelText(/Email Address/i), "user@example.com");
+    await user.type(screen.getByLabelText(/Password/i), "wrongpass");
+    await user.click(screen.getByRole("button", { name: /Sign In/i }));
+
+    expect(await screen.findByText(/Invalid credentials/i)).toBeInTheDocument();
+  });
+
+  test("shows connection error when API throws", async () => {
+    const user = userEvent.setup();
+
+    mockGetDeviceType.mockReturnValue("Windows");
+    mockLoginWithEmailPassword.mockRejectedValue(new Error("Network error"));
+
+    render(<LoginPage />);
+
+    await user.type(screen.getByLabelText(/Email Address/i), "user@example.com");
+    await user.type(screen.getByLabelText(/Password/i), "pass123");
+    await user.click(screen.getByRole("button", { name: /Sign In/i }));
+
+    expect(
+      await screen.findByText(/Could not connect to the server/i)
+    ).toBeInTheDocument();
+  });
+
+  test("disables inputs while loading", async () => {
+    const user = userEvent.setup();
+
+    mockGetDeviceType.mockReturnValue("Windows");
+    mockLoginWithEmailPassword.mockImplementation(() => new Promise(() => {}));
+
+    render(<LoginPage />);
+
+    const emailInput = screen.getByLabelText(/Email Address/i);
+    const passwordInput = screen.getByLabelText(/Password/i);
+    const submitBtn = screen.getByRole("button", { name: /Sign In/i });
+
+    await user.type(emailInput, "user@example.com");
+    await user.type(passwordInput, "pass123");
+    await user.click(submitBtn);
+
+    expect(emailInput).toBeDisabled();
+    expect(passwordInput).toBeDisabled();
+  });
+});
