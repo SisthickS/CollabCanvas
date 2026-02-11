@@ -51,23 +51,13 @@ describe('ThemeSelector', () => {
     expect(document.documentElement.classList.contains('dark')).toBe(true);
   });
 
-  test('light theme removes .dark class (no explicit light class)', () => {
-    render(<ThemeSelector currentTheme="system" onThemeChange={jest.fn()} />);
-
-    fireEvent.click(screen.getByRole('button', { name: /Select Light theme/i }));
-
-    expect(document.documentElement.classList.contains('dark')).toBe(false);
-    expect(document.documentElement.classList.contains('high-contrast')).toBe(false);
-  });
-
   test('ignores invalid saved theme and falls back to currentTheme', () => {
     localStorage.setItem('user-theme', 'not-a-theme');
 
     render(<ThemeSelector currentTheme="light" onThemeChange={jest.fn()} />);
 
     expect(screen.getByLabelText('Current theme: Light')).toBeInTheDocument();
-    // Light theme means .dark is not present
-    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    expect(document.documentElement.classList.contains('light')).toBe(true);
   });
 
   test('clicking a theme calls onThemeChange and applies correct class + localStorage', () => {
@@ -116,6 +106,7 @@ describe('ThemeSelector', () => {
 
     expect(localStorage.getItem('user-theme')).toBe('system');
     expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.documentElement.classList.contains('light')).toBe(false);
   });
 
   test('system theme applies light if system prefers light', () => {
@@ -124,7 +115,7 @@ describe('ThemeSelector', () => {
     render(<ThemeSelector currentTheme="system" onThemeChange={jest.fn()} />);
 
     expect(localStorage.getItem('user-theme')).toBe('system');
-    // Light theme means .dark class should NOT be present
+    expect(document.documentElement.classList.contains('light')).toBe(true);
     expect(document.documentElement.classList.contains('dark')).toBe(false);
   });
 

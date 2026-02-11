@@ -1,6 +1,6 @@
 export type ThemeType = 'light' | 'dark' | 'system' | 'high-contrast';
 
-const THEME_KEY = 'theme';
+const THEME_KEY = 'user-theme';
 
 export const getStoredTheme = (): ThemeType | null => {
     return localStorage.getItem(THEME_KEY) as ThemeType | null;
@@ -11,40 +11,51 @@ export const setStoredTheme = (theme: ThemeType) => {
 };
 
 /**
- * Applies theme by manipulating the HTML element's class attribute
- * 
- * For Tailwind CSS with darkMode: 'class':
- * - Light theme: NO .dark class (Tailwind applies default styles)
- * - Dark theme: .dark class present (Tailwind applies dark: variants)
+ * Applies theme by setting the appropriate class on the HTML element
+ * This uses Tailwind's class-based dark mode approach
  */
 export const applyTheme = (theme: ThemeType) => {
     const html = document.documentElement;
+    const currentClasses = Array.from(html.classList);
+    
+    console.log('🎨 Applying theme:', theme);
+    console.log('📝 Current HTML classes before:', currentClasses);
 
-    // Step 1: Always remove all theme-related classes first
+    // Step 1: Remove all theme-related classes
     html.classList.remove('light', 'dark', 'high-contrast');
-
-    // Step 2: Force a DOM reflow to ensure clean state
+    
+    // Step 2: Force a DOM update
     void html.offsetHeight;
-
-    // Step 3: Apply the appropriate class(es)
+    
+    // Step 3: Add the appropriate theme class based on selection
     if (theme === 'system') {
-        // Use system color scheme preference
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            html.classList.add('dark');
-        }
-        // For light: don't add any class (default Tailwind light styles)
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const themeToApply = prefersDark ? 'dark' : 'light';
+        html.classList.add(themeToApply);
+        console.log('✅ System theme applied:', themeToApply);
     } else if (theme === 'high-contrast') {
         html.classList.add('high-contrast', 'dark');
-    } else if (theme === 'dark') {
-        html.classList.add('dark');
+        console.log('✅ High contrast theme applied (with dark base)');
+    } else {
+        // Apply light or dark theme
+        html.classList.add(theme);
+        console.log('✅ Theme applied:', theme);
     }
-    // For light: don't add any class (default Tailwind light styles)
+    
+    // Step 4: Verify the changes
+    const finalClasses = Array.from(html.classList);
+    console.log('📝 HTML classes after:', finalClasses);
+    console.log('📊 Theme verification:');
+    console.log('   - Has .light:', html.classList.contains('light'));
+    console.log('   - Has .dark:', html.classList.contains('dark'));
+    console.log('   - Has .high-contrast:', html.classList.contains('high-contrast'));
 };
 
 export const initializeTheme = (): (() => void) => {
     const storedTheme = getStoredTheme();
     const themeToUse = storedTheme || 'system';
-
+    
+    console.log('🚀 Initializing theme:', themeToUse);
     applyTheme(themeToUse as ThemeType);
 
     // Listen for system theme changes
@@ -52,6 +63,7 @@ export const initializeTheme = (): (() => void) => {
     const handleChange = () => {
         const currentTheme = getStoredTheme();
         if (!currentTheme || currentTheme === 'system') {
+            console.log('🔄 System theme preference changed');
             applyTheme('system');
         }
     };

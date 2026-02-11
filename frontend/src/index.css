@@ -33,28 +33,20 @@
  */
 @import "tailwindcss";
 
-/* ==========================================================================
-   Theme Configuration - Light/Dark Mode Theming
-   ========================================================================== */
+/* Default light theme - applied to root and explicitly to .light class */
+:root,
+:root.light {
+  color-scheme: light;
+}
 
-@layer base {
-  /* 
-   * Default light theme - when no dark class is present
-   * or when .light class is explicitly set
-   */
-  :root {
-    color-scheme: light;
-  }
+/* Dark theme - applied when .dark class is present */
+:root.dark {
+  color-scheme: dark;
+}
 
-  /* Dark theme when .dark class is present */
-  :root.dark {
-    color-scheme: dark;
-  }
-
-  /* High contrast theme (dark base) */
-  :root.high-contrast {
-    color-scheme: dark;
-  }
+/* High contrast theme - applied when .high-contrast class is present */
+:root.high-contrast {
+  color-scheme: dark;
 }
 
 /* ==========================================================================
