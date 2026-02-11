@@ -168,6 +168,7 @@ For more detailed technical documentation, please refer to the following guides:
 *   [API Reference](docs/API.md): Details on authentication and user management endpoints.
 *   [WebSocket Events](docs/SOCKETS.md): Comprehensive list of real-time events for collaboration.
 *   [Database Schema](docs/DATABASE.md): Overview of MongoDB collections and models.
+*   [DevOps Strategy](DEVOPS_STRATEGY.md): Information on CI/CD, deployment, and infrastructure.
 
 ## Troubleshooting
 
