@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Sun, Moon, Monitor, Contrast, Check, Palette as PaletteIcon } from 'lucide-react';
 
-/**
- * Supported theme types for the application
- */
 export type ThemeType = 'light' | 'dark' | 'system' | 'high-contrast';
 
 interface ThemeOption {
@@ -58,11 +55,28 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
     }
   ];
 
+  // 1. Initialize state
+  const [selectedTheme, setSelectedTheme] = useState<ThemeType>(() => {
+    const savedTheme = localStorage.getItem('theme') as ThemeType;
+    if (savedTheme && VALID_THEMES.includes(savedTheme)) {
+      return savedTheme;
+    }
+    return currentTheme ?? 'system';
+  });
+
   /**
-   * MEMOIZED THEME APPLICATION
-   * Wrapping in useCallback prevents the function from being recreated 
-   * on every render, which fixes the dependency warnings in useEffect.
+   * FIX: RENDER-PHASE STATE SYNC
+   * Instead of useEffect, we track the previous prop value.
+   * If the prop changes, we update the state immediately during render.
+   * This prevents the "cascading render" lint error.
    */
+  const [prevTheme, setPrevTheme] = useState<ThemeType>(currentTheme);
+
+  if (currentTheme !== prevTheme) {
+    setPrevTheme(currentTheme);
+    setSelectedTheme(currentTheme);
+  }
+
   const applyThemeToDocument = useCallback((theme: ThemeType): void => {
     const html = document.documentElement;
     html.classList.remove('light', 'dark', 'high-contrast');
@@ -90,25 +104,6 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
     localStorage.setItem('theme', theme);
   }, []);
 
-  const [selectedTheme, setSelectedTheme] = useState<ThemeType>(() => {
-    const savedTheme = localStorage.getItem('theme') as ThemeType;
-    if (savedTheme && VALID_THEMES.includes(savedTheme)) {
-      return savedTheme;
-    }
-    return currentTheme ?? 'system';
-  });
-
-  /**
-   * FIX: SYNC PROP WITH STATE
-   * This handles the "set-state-in-effect" error by only updating
-   * when the values are actually different.
-   */
-  useEffect(() => {
-    if (currentTheme && currentTheme !== selectedTheme) {
-      setSelectedTheme(currentTheme);
-    }
-  }, [currentTheme, selectedTheme]);
-
   const handleThemeSelect = (theme: ThemeType): void => {
     onThemeChange(theme);
   };
@@ -117,14 +112,12 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
     handleThemeSelect('system');
   };
 
+  // Apply theme to DOM when selectedTheme changes
   useEffect(() => {
     applyThemeToDocument(selectedTheme);
   }, [selectedTheme, applyThemeToDocument]);
 
-  /**
-   * FIX: SYSTEM PREFERENCE LISTENER
-   * Added applyThemeToDocument to dependencies to satisfy linter.
-   */
+  // System preference listener
   useEffect(() => {
     if (selectedTheme !== 'system') return;
 
@@ -142,15 +135,11 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <PaletteIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-          <h3 className="font-semibold text-slate-800 dark:text-white">
-            Theme Selection
-          </h3>
+          <h3 className="font-semibold text-slate-800 dark:text-white">Theme Selection</h3>
         </div>
-
         <button
           onClick={resetToDefault}
           className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-          aria-label="Reset theme to system default"
         >
           Reset to Default
         </button>
@@ -166,7 +155,6 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                 : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'
             }`}
-            aria-label={`Select ${theme.name} theme`}
             aria-pressed={selectedTheme === theme.id}
           >
             <div className="flex items-start justify-between">
@@ -174,53 +162,23 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
                 <div className={`p-2 rounded-lg ${theme.color} text-white`}>
                   {theme.icon}
                 </div>
-
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-800 dark:text-white">
-                      {theme.name}
-                    </span>
-                    {selectedTheme === theme.id && (
-                      <Check
-                        className="w-4 h-4 text-green-600"
-                        aria-hidden="true"
-                      />
-                    )}
+                    <span className="font-medium text-slate-800 dark:text-white">{theme.name}</span>
+                    {selectedTheme === theme.id && <Check className="w-4 h-4 text-green-600" />}
                   </div>
-
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {theme.description}
-                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{theme.description}</p>
                 </div>
               </div>
             </div>
 
             <div className="mt-3 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
               <div className="flex h-12">
-                <div
-                  className={`w-1/4 ${
-                    theme.id === 'light' ? 'bg-slate-100' : 
-                    theme.id === 'dark' ? 'bg-slate-800' : 
-                    theme.id === 'high-contrast' ? 'bg-slate-900' : 'bg-slate-100 dark:bg-slate-800'
-                  }`}
-                />
-                <div
-                  className={`flex-1 ${
-                    theme.id === 'light' ? 'bg-white' : 
-                    theme.id === 'dark' ? 'bg-slate-900' : 
-                    theme.id === 'high-contrast' ? 'bg-black' : 'bg-white dark:bg-slate-900'
-                  }`}
-                >
+                <div className={`w-1/4 ${theme.id === 'light' ? 'bg-slate-100' : theme.id === 'dark' ? 'bg-slate-800' : theme.id === 'high-contrast' ? 'bg-slate-900' : 'bg-slate-100 dark:bg-slate-800'}`} />
+                <div className={`flex-1 ${theme.id === 'light' ? 'bg-white' : theme.id === 'dark' ? 'bg-slate-900' : theme.id === 'high-contrast' ? 'bg-black' : 'bg-white dark:bg-slate-900'}`}>
                   <div className="flex items-center gap-2 p-2">
                     <div className={`w-2 h-2 rounded-full ${theme.id === 'high-contrast' ? 'bg-yellow-400' : 'bg-blue-500'}`} />
-                    <div
-                      className={`h-2 rounded ${
-                        theme.id === 'light' ? 'bg-slate-200' : 
-                        theme.id === 'dark' ? 'bg-slate-700' : 
-                        theme.id === 'high-contrast' ? 'bg-white' : 'bg-slate-200 dark:bg-slate-700'
-                      }`}
-                      style={{ width: '60%' }}
-                    />
+                    <div className={`h-2 rounded ${theme.id === 'light' ? 'bg-slate-200' : theme.id === 'dark' ? 'bg-slate-700' : theme.id === 'high-contrast' ? 'bg-white' : 'bg-slate-200 dark:bg-slate-700'}`} style={{ width: '60%' }} />
                   </div>
                 </div>
               </div>
@@ -238,21 +196,13 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
       <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-slate-800 dark:text-white">
-              Current Theme
-            </p>
+            <p className="font-medium text-slate-800 dark:text-white">Current Theme</p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {themeOptions.find((t) => t.id === selectedTheme)?.description}
             </p>
           </div>
           <div className="flex items-center gap-2 px-3 py-1 bg-white dark:bg-slate-700 rounded-full border border-slate-200 dark:border-slate-600">
-            <div
-              className={`w-2 h-2 rounded-full ${
-                selectedTheme === 'light' ? 'bg-yellow-500' : 
-                selectedTheme === 'dark' ? 'bg-indigo-600' : 
-                selectedTheme === 'system' ? 'bg-slate-600' : 'bg-orange-600'
-              }`}
-            />
+            <div className={`w-2 h-2 rounded-full ${selectedTheme === 'light' ? 'bg-yellow-500' : selectedTheme === 'dark' ? 'bg-indigo-600' : selectedTheme === 'system' ? 'bg-slate-600' : 'bg-orange-600'}`} />
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
               {themeOptions.find((t) => t.id === selectedTheme)?.name}
             </span>
