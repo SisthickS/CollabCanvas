@@ -58,10 +58,10 @@ export const Sidebar = () => {
       await performLogout({
         showConfirmation: false,
         showSuccess: true,
-        redirectTo: "/login",
+        redirectTo: "/CollabCanvas/login",
       });
       setShowLogoutConfirm(false);
-      navigate("/login");
+      navigate("/CollabCanvas/login");
     } catch (error) {
       console.error("Sign out error:", error);
       alert("Failed to sign out. Please try again.");
@@ -77,14 +77,14 @@ export const Sidebar = () => {
 
   return (
     <>
-      <aside 
+      <aside
         className="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 h-screen sticky top-0 flex flex-col p-4"
         role="complementary"
         aria-label="Main navigation"
       >
         {/* Application logo/brand section */}
         <div className="flex items-center gap-2 px-2 mb-8">
-          <div 
+          <div
             className="bg-blue-600 p-2 rounded-lg text-white"
             role="img"
             aria-label="CollabCanvas logo"
@@ -99,13 +99,13 @@ export const Sidebar = () => {
         {/* User Profile Info */}
         <div className="px-3 py-4 mb-6 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
           <div className="flex items-center gap-3">
-            <div 
+            <div
               className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 overflow-hidden"
               role="img"
               aria-label="User avatar"
             >
-              <img 
-                src={userData?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData?.fullName || userData?.displayName || 'User'}`} 
+              <img
+                src={userData?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData?.fullName || userData?.displayName || 'User'}`}
                 alt="User avatar"
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -134,7 +134,7 @@ export const Sidebar = () => {
         </div>
 
         {/* Main navigation menu */}
-        <nav 
+        <nav
           className="flex-1 space-y-1"
           aria-label="Primary navigation"
         >
@@ -146,10 +146,10 @@ export const Sidebar = () => {
               aria-label={`Navigate to ${item.label}`}
               aria-current={window.location.pathname === item.path ? 'page' : undefined}
             >
-              <item.icon 
-                size={20} 
-                className="group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" 
-                aria-hidden="true" 
+              <item.icon
+                size={20}
+                className="group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
+                aria-hidden="true"
               />
               <span className="font-medium">{item.label}</span>
             </Link>
@@ -163,10 +163,10 @@ export const Sidebar = () => {
           className="flex items-center gap-3 px-3 py-2.5 mt-4 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Sign out of your account"
         >
-          <LogOut 
-            size={20} 
-            className="group-hover:animate-pulse transition-transform" 
-            aria-hidden="true" 
+          <LogOut
+            size={20}
+            className="group-hover:animate-pulse transition-transform"
+            aria-hidden="true"
           />
           <span className="font-medium">
             {isLoggingOut ? "Signing Out..." : "Sign Out"}
@@ -183,7 +183,7 @@ export const Sidebar = () => {
 
       <Modal isOpen={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} title="Confirm Sign Out">
         <div className="space-y-4">
-          <div 
+          <div
             className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
             role="alert"
             aria-label="Sign out warning"
@@ -194,7 +194,7 @@ export const Sidebar = () => {
               <p className="text-blue-700 dark:text-blue-400 text-sm">You will need to sign in again to access your account.</p>
             </div>
           </div>
-          
+
           <div className="space-y-3">
             <Button
               onClick={confirmSignOut}
