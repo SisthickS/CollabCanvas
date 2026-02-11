@@ -43,7 +43,7 @@ describe('ThemeSelector', () => {
   });
 
   test('uses saved theme from localStorage if valid', () => {
-    localStorage.setItem('theme', 'dark');
+    localStorage.setItem('user-theme', 'dark');
 
     render(<ThemeSelector currentTheme="light" onThemeChange={jest.fn()} />);
 
@@ -52,7 +52,7 @@ describe('ThemeSelector', () => {
   });
 
   test('ignores invalid saved theme and falls back to currentTheme', () => {
-    localStorage.setItem('theme', 'not-a-theme');
+    localStorage.setItem('user-theme', 'not-a-theme');
 
     render(<ThemeSelector currentTheme="light" onThemeChange={jest.fn()} />);
 
@@ -68,7 +68,7 @@ describe('ThemeSelector', () => {
     fireEvent.click(screen.getByRole('button', { name: /Select Dark theme/i }));
 
     expect(onThemeChange).toHaveBeenCalledWith('dark');
-    expect(localStorage.getItem('theme')).toBe('dark');
+    expect(localStorage.getItem('user-theme')).toBe('dark');
     expect(document.documentElement.classList.contains('dark')).toBe(true);
   });
 
@@ -77,7 +77,7 @@ describe('ThemeSelector', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Select High Contrast theme/i }));
 
-    expect(localStorage.getItem('theme')).toBe('high-contrast');
+    expect(localStorage.getItem('user-theme')).toBe('high-contrast');
     expect(document.documentElement.classList.contains('high-contrast')).toBe(true);
     expect(document.documentElement.classList.contains('dark')).toBe(true);
   });
@@ -95,7 +95,7 @@ describe('ThemeSelector', () => {
     fireEvent.click(screen.getByRole('button', { name: /Reset theme to system default/i }));
 
     expect(onThemeChange).toHaveBeenLastCalledWith('system');
-    expect(localStorage.getItem('theme')).toBe('system');
+    expect(localStorage.getItem('user-theme')).toBe('system');
     expect(screen.getByLabelText('Current theme: System')).toBeInTheDocument();
   });
 
@@ -104,7 +104,7 @@ describe('ThemeSelector', () => {
 
     render(<ThemeSelector currentTheme="system" onThemeChange={jest.fn()} />);
 
-    expect(localStorage.getItem('theme')).toBe('system');
+    expect(localStorage.getItem('user-theme')).toBe('system');
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(document.documentElement.classList.contains('light')).toBe(false);
   });
@@ -114,7 +114,7 @@ describe('ThemeSelector', () => {
 
     render(<ThemeSelector currentTheme="system" onThemeChange={jest.fn()} />);
 
-    expect(localStorage.getItem('theme')).toBe('system');
+    expect(localStorage.getItem('user-theme')).toBe('system');
     expect(document.documentElement.classList.contains('light')).toBe(true);
     expect(document.documentElement.classList.contains('dark')).toBe(false);
   });

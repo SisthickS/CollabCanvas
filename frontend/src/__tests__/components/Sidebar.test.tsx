@@ -74,7 +74,7 @@ describe('Sidebar', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(window, 'alert').mockImplementation(() => {});
+    jest.spyOn(window, 'alert').mockImplementation(() => { });
     // default auth
     mockedUseAuth.mockReturnValue({
       user: baseUser,
@@ -195,10 +195,10 @@ describe('Sidebar', () => {
     expect(mockedPerformLogout).toHaveBeenCalledWith({
       showConfirmation: false,
       showSuccess: true,
-      redirectTo: '/login',
+      redirectTo: '/CollabCanvas/login',
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith('/login');
+    expect(mockNavigate).toHaveBeenCalledWith('/CollabCanvas/login');
   });
 
   it('shows alert if sign out fails', async () => {

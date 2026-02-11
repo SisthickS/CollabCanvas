@@ -110,14 +110,11 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
   }, [currentTheme, selectedTheme]);
 
   const handleThemeSelect = (theme: ThemeType): void => {
-    setSelectedTheme(theme);
     onThemeChange(theme);
   };
 
   const resetToDefault = (): void => {
-    const defaultTheme: ThemeType = 'system';
-    setSelectedTheme(defaultTheme);
-    onThemeChange(defaultTheme);
+    handleThemeSelect('system');
   };
 
   useEffect(() => {
@@ -145,8 +142,11 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <PaletteIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-          <h3 className="font-semibold text-slate-800 dark:text-white">Theme Selection</h3>
+          <h3 className="font-semibold text-slate-800 dark:text-white">
+            Theme Selection
+          </h3>
         </div>
+
         <button
           onClick={resetToDefault}
           className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
@@ -174,15 +174,20 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
                 <div className={`p-2 rounded-lg ${theme.color} text-white`}>
                   {theme.icon}
                 </div>
+
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-slate-800 dark:text-white">
                       {theme.name}
                     </span>
                     {selectedTheme === theme.id && (
-                      <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
+                      <Check
+                        className="w-4 h-4 text-green-600"
+                        aria-hidden="true"
+                      />
                     )}
                   </div>
+
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                     {theme.description}
                   </p>
@@ -233,9 +238,11 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
       <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-slate-800 dark:text-white">Current Theme</p>
+            <p className="font-medium text-slate-800 dark:text-white">
+              Current Theme
+            </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {themeOptions.find(t => t.id === selectedTheme)?.description}
+              {themeOptions.find((t) => t.id === selectedTheme)?.description}
             </p>
           </div>
           <div className="flex items-center gap-2 px-3 py-1 bg-white dark:bg-slate-700 rounded-full border border-slate-200 dark:border-slate-600">
@@ -247,7 +254,7 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
               }`}
             />
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              {themeOptions.find(t => t.id === selectedTheme)?.name}
+              {themeOptions.find((t) => t.id === selectedTheme)?.name}
             </span>
           </div>
         </div>
