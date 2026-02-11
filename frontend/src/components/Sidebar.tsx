@@ -78,7 +78,7 @@ export const Sidebar = () => {
   return (
     <>
       <aside
-        className="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 h-screen sticky top-0 flex flex-col p-4"
+        className="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 h-screen sticky top-0 flex flex-col p-4 z-[60]"
         role="complementary"
         aria-label="Main navigation"
       >

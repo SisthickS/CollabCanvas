@@ -8,7 +8,7 @@ import {
   markAllNotificationsAsRead,
   deleteNotification,
 } from "../../utils/notificationService";
-import { Bell, X, Check, Trash2 } from "lucide-react";
+import { Bell, Check, Trash2 } from "lucide-react";
 
 interface Notification {
   _id: string;
@@ -138,7 +138,7 @@ export const NotificationCenter = () => {
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 max-h-96 bg-white rounded-lg shadow-xl border border-slate-200 z-50 overflow-hidden flex flex-col">
+        <div className="absolute left-0 mt-2 w-96 max-h-96 bg-white rounded-lg shadow-xl border border-slate-200 z-[100] overflow-hidden flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-slate-200">
             <h3 className="font-semibold text-slate-900">Notifications</h3>
@@ -164,9 +164,8 @@ export const NotificationCenter = () => {
               notifications.map((notification) => (
                 <div
                   key={notification._id}
-                  className={`p-3 border-b border-slate-100 hover:bg-slate-50 transition-colors ${
-                    !notification.isRead ? "bg-blue-50" : ""
-                  }`}
+                  className={`p-3 border-b border-slate-100 hover:bg-slate-50 transition-colors ${!notification.isRead ? "bg-blue-50" : ""
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
