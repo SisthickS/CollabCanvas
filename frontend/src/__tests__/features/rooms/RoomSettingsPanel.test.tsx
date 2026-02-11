@@ -4,6 +4,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import RoomSettingsPanel from '../../../features/rooms/RoomSettingsPanel';
 import roomService from '../../../services/roomService';
 
+// Define a type for the mocked service to avoid 'any' warnings
+type MockedRoomService = {
+  updateRoom: ReturnType<typeof vi.fn>;
+  deleteRoom: ReturnType<typeof vi.fn>;
+};
+
 // ---- Mock the service ----
 vi.mock('../../../services/roomService', () => ({
   default: {
@@ -11,10 +17,8 @@ vi.mock('../../../services/roomService', () => ({
     deleteRoom: vi.fn(),
   },
 }));
-const mockedRoomService = roomService as typeof roomService & {
-  updateRoom: vi.Mock;
-  deleteRoom: vi.Mock;
-};
+
+const mockedRoomService = roomService as unknown as MockedRoomService;
 
 // ---- Mock Room Data ----
 const mockRoom = {
@@ -120,7 +124,11 @@ describe('RoomSettingsPanel', () => {
 
   it('copies room ID and link to clipboard', async () => {
     const writeTextMock = vi.fn();
-    Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
+    // Use a more robust mock for clipboard
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: writeTextMock },
+      configurable: true,
+    });
 
     render(
       <RoomSettingsPanel
